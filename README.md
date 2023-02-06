@@ -34,3 +34,4 @@ sol = psw.solve_isothermal_layer(
 ) 
 fig,axes=plot_psw.plot_isothermal_layer(sol)
 ```
+![image](IsoLayerExample.png)
