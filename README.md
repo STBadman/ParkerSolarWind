@@ -35,3 +35,5 @@ sol = psw.solve_isothermal_layer(
 fig,axes=plot_psw.plot_isothermal_layer(sol)
 ```
 ![image](IsoLayerExample.png)
+
+Examples for the other two types of solution as a function of varying input parameters can be seen in `ExampleNotebook.ipynb`
