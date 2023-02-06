@@ -38,7 +38,7 @@ fig,axes=plot_psw.plot_isothermal_layer(sol)
 
 Examples for the other two types of solution as a function of varying input parameters can be seen in `ExampleNotebook.ipynb`
 
-As of this commit : 
+As of this commit (2/6/2023) : 
 
 * The average corpuscular mass defaults to $\mu=0.5$ but may be tweaked as a parameter to the solve functions
 * (Future enhancement) Radial flux tube expansion is assumed throughout all space 
