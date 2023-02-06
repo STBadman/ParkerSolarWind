@@ -1,6 +1,6 @@
 ## ParkerSolarWind
 
-This repository contains code which solves the hydrodynamic equations for an expanding trans-sonic flow under a spherically symmetric gravitational theory,  which is Eugene Parker's theory of the solar wind ([Parker 1958](https://ui.adsabs.harvard.edu/abs/1958ApJ...128..664P/abstract), [Parker 1960](https://ui.adsabs.harvard.edu/abs/1960ApJ...132..821P/abstract)).
+This repository contains code which solves the hydrodynamic equations for an expanding trans-sonic flow under a spherically symmetric gravitational force,  which is Eugene Parker's theory of the solar wind ([Parker 1958](https://ui.adsabs.harvard.edu/abs/1958ApJ...128..664P/abstract), [Parker 1960](https://ui.adsabs.harvard.edu/abs/1960ApJ...132..821P/abstract)).
 
 This code follows closely the recent derivation by [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) and has greatly benefited also from the discussion in [Dakeyo et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract).
 
@@ -37,3 +37,10 @@ fig,axes=plot_psw.plot_isothermal_layer(sol)
 ![image](IsoLayerExample.png)
 
 Examples for the other two types of solution as a function of varying input parameters can be seen in `ExampleNotebook.ipynb`
+
+As of this commit : 
+
+* The average corpuscular mass defaults to $\mu=0.5$ but may be tweaked as a parameter to the solve functions
+* (Future enhancement) Radial flux tube expansion is assumed throughout all space 
+* (Known Issue) For `solve_parker_polytropic` No check is currently done that the input parameters lie in the allowed region of $(T_\odot-\gamma)$ space ([Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract)), so it is possible to generate an all-NaN solution for this reason.
+* (Known Issue) For `solve_parker_polytropic`, there are some numerical instability issues which can result in solutions in the wrong branch or all-NaN solutions. This is likely due to the implementation of `scipy.optimize.root` with which we currently integrate from $1R_\odot$ outwards and use the previous solution as the initial guess, except at the critical point where we enforce the guess to jump to above the critical speed. A future implementation should integrate explicitly from the critical point down and up separately with adaptive radial grid spacing and the local solution gradient should be used to imrpove the guess.
