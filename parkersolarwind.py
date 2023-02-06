@@ -9,24 +9,25 @@ from matplotlib.patches import Rectangle
 
 ##### ISOTHERMAL PARKER SOLAR WIND
 
-def coronal_base_altitude(T_c=5.8e+6*u.K) :
-    return (const.G*const.M_sun*const.m_p/(4*const.k_B*T_c)).to("R_sun")
+def coronal_base_altitude(T_c=5.8e+6*u.K,mu=0.5) :
+    return (const.G*const.M_sun*mu*const.m_p/(2*const.k_B*T_c)).to("R_sun")
 
-def critical_speed(T_coronal=2e+6*u.K) :
-    return ((2*const.k_B*T_coronal/const.m_p)**0.5).to(u.km/u.s)
+def critical_speed(T_coronal=2e+6*u.K,mu=0.5) :
+    return ((const.k_B*T_coronal/(mu*const.m_p))**0.5).to(u.km/u.s)
 
-def critical_radius(T_coronal=2e+6*u.K) :
-    return (const.G*const.M_sun/2/critical_speed(T_coronal)**2).to("R_sun")
+def critical_radius(T_coronal=2e+6*u.K,mu=0.5) :
+    return (const.G*const.M_sun/2/critical_speed(T_coronal,mu=mu)**2).to("R_sun")
 
 def parker_isothermal(u,r,u_c,r_c) :
     return ((u/u_c)**2 -1) - np.log((u/u_c)**2) - 4*np.log(r/r_c) -4*(r_c/r-1)
 
 def solve_parker_isothermal(
-    R_sol, T0, rho0=1e7*const.m_p/2/u.cm**3, r0=1.0*u.R_sun
+    R_sol, T0, n0=1e7*u.cm**-3, r0=1.0*u.R_sun,mu=0.5
     ) :
     u_sol=[]
-    R_crit = critical_radius(T0).to("R_sun").value
-    u_crit = critical_speed(T0).to("km/s").value
+    R_crit = critical_radius(T0,mu=mu).to("R_sun").value
+    u_crit = critical_speed(T0,mu=mu).to("km/s").value
+    rho0 = mu*const.m_p*n0
 
     # There are 4 branches: 
     #      accelerating (u>0, u<0), decelerating (u>0, u<0)
@@ -44,7 +45,7 @@ def solve_parker_isothermal(
     rho_sol = rho0 * (u_sol[0]*r0**2)/(u_sol*R_sol.to("R_sun")**2)
     T_sol = T0 * np.ones(len(u_sol))
 
-    return R_sol.to("R_sun"), rho_sol.to("kg/cm^3"), u_sol.to("km/s"), T_sol.to("MK")
+    return R_sol.to("R_sun"), rho_sol.to("kg/cm^3"), u_sol.to("km/s"), T_sol.to("MK"), mu
 
 ###### POLYTROPIC PARKER SOLAR WIND
 
@@ -52,14 +53,14 @@ def solve_parker_isothermal(
 def get_ug(r0) : 
     return ((const.G*const.M_sun/(2*r0))**0.5).to("km/s")
 
-### define uc0(gamma,T0)
-def get_uc0(gamma,T_0) : 
-    return ((gamma*2*const.k_B*T_0/const.m_p)**0.5).to("km/s")
+### define uc0(gamma,T0,mu=0.5)
+def get_uc0(gamma,T_0,mu=0.5) : 
+    return ((gamma*const.k_B*T_0/(mu*const.m_p))**0.5).to("km/s")
 
 ### define f(s_c,T_0, gamma | r0 ) = 0
-def s_crit(sc,T0_,gamma_,r0=1*u.R_sun) :
+def s_crit(sc,T0_,gamma_,r0=1*u.R_sun, mu=0.5) :
     ug = get_ug(r0).value
-    uc0 = get_uc0(gamma_,T0_).value
+    uc0 = get_uc0(gamma_,T0_,mu=mu).value
     term1 = 0.5*((ug/uc0)**(4/(gamma_-1)) * sc**(2*(2*gamma_-3)/(gamma_-1))-1)
     term2 = (1/(gamma_-1))*((uc0/ug)**2*sc - 1)
     term3 = -2*(sc-1)
@@ -68,14 +69,14 @@ def s_crit(sc,T0_,gamma_,r0=1*u.R_sun) :
 ### function that solves for s_crit for the accelerating and
 ### assuming 2 roots and returns [nan,nan] if solution doesn't 
 ### converge
-def solve_sc(T_0__,gamma__,r0__=1.0*u.R_sun) :
-    sol = opt.root(s_crit,[1,10],args=(T_0__,gamma__,r0__))
+def solve_sc(T_0__,gamma__,r0__=1.0*u.R_sun,mu__=0.5) :
+    sol = opt.root(s_crit,[1,10],args=(T_0__,gamma__,r0__,mu__))
     if sol.message == 'The solution converged.' : return sorted(list(sol.x))
     else : return [np.nan,np.nan]
 
-def get_u0(s_c,gamma,T_0,r0=1*u.R_sun) :
+def get_u0(s_c,gamma,T_0,r0=1*u.R_sun,mu=0.5) :
     ug = get_ug(r0)
-    uc0 = get_uc0(gamma,T_0)
+    uc0 = get_uc0(gamma,T_0, mu=mu)
     b = (3*gamma-5)/(gamma-1)
     return ug * (ug/uc0)**(2/(gamma-1))*np.sqrt(s_c**b)
 
@@ -93,8 +94,9 @@ def solve_parker_polytropic(
     T0, 
     gamma, 
     r0=1.0*u.R_sun, 
-    rho0=1e7*const.m_p/2/u.cm**3, 
-    u0=None
+    n0=1e7*u.cm**-3, 
+    u0=None,
+    mu=0.5
     ) :
     #### NEEDS ADDING : Check solution exists
 
@@ -102,7 +104,7 @@ def solve_parker_polytropic(
     # be undefined
 
     ### First solve for the critical point
-    r_crit = np.nanmax(solve_sc(T0,gamma,r0__=r0))*u.R_sun 
+    r_crit = np.nanmax(solve_sc(T0,gamma,r0__=r0,mu__=mu))*u.R_sun 
     # Compute sound speed at critical point
     uc_crit = get_uc_crit(r_crit/r0)
 
@@ -110,13 +112,13 @@ def solve_parker_polytropic(
     if u0 is None :
         ### Otherwise compute the flow speed at r0 
         ### for transonic solution
-        u0 = get_u0(r_crit/(1*u.R_sun), gamma, T0)
+        u0 = get_u0(r_crit/r0, gamma, T0, mu=mu)
 
     # 1/2 V_esc
     ug = get_ug(r0=r0)
 
     # Coronal base sound speed
-    uc0 = get_uc0(gamma, T0)
+    uc0 = get_uc0(gamma, T0, mu=mu)
     
     # Solve Bernouilli's equation
     u_sol_polytropic = []
@@ -135,20 +137,26 @@ def solve_parker_polytropic(
         if sol.message == 'The solution converged.' :
             uguessnext=sorted(list(sol.x))
             uguess=uguessnext
-        else : uguessnext = [np.nan]*2
+        else :
+            #print(R,"failed") 
+            uguessnext = [np.nan]*2
         #print(uguess)
         if R < r_crit : u_sol_polytropic.append(uguessnext[-2])
         else : u_sol_polytropic.append(uguessnext[-1])
     u_sol_polytropic = np.array(u_sol_polytropic) * u.km/u.s
+    u_sol_polytropic[0] = u0
             
     # Produce density and temperature
+    rho0 = mu*const.m_p*n0
     rho_sol_polytropic = rho0*(
         u0*r0**2 /(u_sol_polytropic*R_sol**2)
-    ) 
+    )
+    rho_sol_polytropic[0] = rho0 # In case u
     
     T_sol_polytropic = T0*(
         u0*r0**2/(u_sol_polytropic*R_sol**2)
-    )**(gamma-1)            
+    )**(gamma-1)
+    T_sol_polytropic[0] = T0           
     
     return (R_sol.to("R_sun"), 
             rho_sol_polytropic.to("kg/cm^3"), 
@@ -156,25 +164,34 @@ def solve_parker_polytropic(
             T_sol_polytropic.to("MK"),
             r_crit.to("R_sun"),
             uc_crit.to("km/s"),
+            gamma,
+            T0,
+            mu
            ) 
 
-def solve_isothermal_layer(R_arr, R_iso, T_iso, gamma, rho0=5e6*const.m_p/2/u.cm**3) :
+def solve_isothermal_layer(R_arr, R_iso, T_iso, gamma, n0=5e6*u.cm**-3, mu=0.5) :
     
-    R_arr_iso = R_arr[np.where(R_arr.to("R_sun").value <= R_iso.to("R_sun").value)[0]]
-    R_arr_poly = R_arr[np.where(R_arr.to("R_sun").value > R_iso.to("R_sun").value)[0]]
+    rho0 = mu*const.m_p*n0
+
+    R_iso_ind = np.where(R_arr.to("R_sun").value >= R_iso.to("R_sun").value)[0][0]
+    R_arr_iso = R_arr[:R_iso_ind+1]
+    R_arr_poly = R_arr[R_iso_ind:]
     
-    _,rho_arr_iso, u_arr_iso, T_arr_iso = solve_parker_isothermal(R_arr_iso,T_iso)
+    _,rho_arr_iso, u_arr_iso, T_arr_iso, _ = solve_parker_isothermal(R_arr_iso,T_iso,n0=n0,mu=mu)
     
     rho0_poly = rho_arr_iso[-1]
     u0_poly = u_arr_iso[-1]
     T0_poly = T_iso
     gamma=gamma
-    r0_poly = R_iso
+    r0_poly = R_arr_iso[-1]
 
     (_,
      rho_arr_poly,
      u_arr_poly,
      T_arr_poly,
+     _,
+     _,
+     _,
      _,
      _
     ) = solve_parker_polytropic(
@@ -182,8 +199,9 @@ def solve_isothermal_layer(R_arr, R_iso, T_iso, gamma, rho0=5e6*const.m_p/2/u.cm
         T0_poly,
         gamma,
         r0_poly,
-        rho0=rho0_poly,
-        u0=u0_poly
+        n0=rho0_poly/(mu*const.m_p),
+        u0=u0_poly,
+        mu=mu
         )
     
     return (R_arr_iso.to("R_sun"), 
@@ -194,4 +212,4 @@ def solve_isothermal_layer(R_arr, R_iso, T_iso, gamma, rho0=5e6*const.m_p/2/u.cm
             rho_arr_poly.to("kg/m^3"), 
             u_arr_poly.to("km/s"), 
             T_arr_poly.to("MK"), 
-            gamma)
+            gamma, mu)

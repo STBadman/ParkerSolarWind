@@ -10,15 +10,15 @@ def plot_isothermal(iso_sols,lw=2) :
     fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
 
     for sol in iso_sols :
-        r_iso,rho_iso,u_iso,T_iso = sol
+        r_iso, rho_iso, u_iso, T_iso, mu = sol
         T0 = T_iso[0]
 
         s=axes[1].plot(r_iso,u_iso,linewidth=lw)
         col = s[0].get_color()
         axes[1].scatter(
-            psw.critical_radius(T0).value,
-            psw.critical_speed(T0).value,
-            color= col, s=100, label=T0
+            psw.critical_radius(T0,mu=mu).value,
+            psw.critical_speed(T0,mu=mu).value,
+            color= col, s=100, label="$T_0$="+f"{T0}, "+"$\mu=$"+f"{mu}"
             )
         axes[0].plot(r_iso,(rho_iso/(const.m_p/2)).to("cm^-3"),linewidth=lw)
         axes[2].axhline(T0.to("MK").value,color=col,linewidth=lw)
@@ -53,16 +53,17 @@ def plot_isothermal(iso_sols,lw=2) :
 
     return fig,axes
 
-def plot_polytropic(poly_sols,add_iso=[False],cm="inferno") :
+def plot_polytropic(poly_sols,add_iso=None,cm="inferno") :
     
     fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
 
     norm = plt.Normalize(0,len(poly_sols))
+    if add_iso is None : add_iso = [False]*len(poly_sols)
     for jj,(sol,add_iso_) in enumerate(zip(poly_sols,add_iso)) :
-        R_sol,rho_sol,u_sol,T_sol,rcrit,ucrit,gamma,T0 = sol
+        R_sol,rho_sol,u_sol,T_sol,rcrit,ucrit,gamma,T0,mu = sol
         r0 = R_sol[0]
         if add_iso_ :
-            rho_iso, u_iso, T_iso = psw.solve_parker_isothermal(R_sol,T0)[1:]
+            rho_iso, u_iso, T_iso, mu = psw.solve_parker_isothermal(R_sol,T0,mu=mu)[1:]
 
         ##### DENSITY #######
         # Polytropic
@@ -96,7 +97,7 @@ def plot_polytropic(poly_sols,add_iso=[False],cm="inferno") :
         ###### TEMPERATURE ######
         # Polytropic
         axes[2].plot(R_sol,T_sol,color=plt.get_cmap(cm)(norm(jj)),
-                     label=f"Polytropic (T0={T0:.1f}, "+"$\gamma$="+f"{gamma})"
+                     label=f"Polytropic (T0={T0.to('MK'):.1f}, "+"$\gamma$="+f"{gamma}, "+"$\mu$="+f"{mu})"
                     )
         # Isothermal
         if add_iso_ : s=axes[2].plot(
@@ -121,7 +122,7 @@ def plot_polytropic(poly_sols,add_iso=[False],cm="inferno") :
     axes[2].set_title("Temperature Profile")
     axes[2].set_ylim(0.05,10)
 
-    axes[2].legend(ncol=1)
+    axes[2].legend(ncol=1,fontsize=8)
     for ax in axes :
         ax.set_xlim(right=R_sol[-1].to("R_sun").value,left=0.9)
         ax.grid(which="both")
@@ -133,15 +134,15 @@ def plot_polytropic(poly_sols,add_iso=[False],cm="inferno") :
     
     return fig,axes
 
-def plot_isothermal_layer(sol,lw=2) :
+def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None) :
     
     (R_arr_iso, rho_arr_iso, u_arr_iso, T_arr_iso, 
-     R_arr_poly, rho_arr_poly, u_arr_poly, T_arr_poly, gamma) = sol
+     R_arr_poly, rho_arr_poly, u_arr_poly, T_arr_poly, gamma, mu) = sol
     R_iso = R_arr_iso[-1]
     T_iso = T_arr_iso[-1]
     
-    
-    fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
+    if fig is None and axes is None :
+        fig,axes=plt.subplots(figsize=figsize,ncols=3,sharex=True)
 
     #### Number Density (assuming m = m_p/2)
     n_arr_iso = rho_arr_iso/(const.m_p/2)
@@ -156,8 +157,8 @@ def plot_isothermal_layer(sol,lw=2) :
     axes[1].plot(R_arr_iso.to("R_sun"),
                  u_arr_iso.to("km/s"),
                  color="red",linewidth=lw,zorder=4)
-    axes[1].scatter(psw.critical_radius(T_arr_iso[0]).to("R_sun"),
-                    psw.critical_speed(T_arr_iso[0]).to("km/s"),
+    axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
+                    psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
                     s=50,color="black",zorder=5)
     axes[1].plot(R_arr_poly.to("R_sun"),
                  u_arr_poly.to("km/s"),
