@@ -30,7 +30,7 @@ sol = psw.solve_isothermal_layer(
     11.5*u.R_sun, # Isothermal layer outer radius
     1.64*u.MK, # Isothermal layer temperature
     1.38, # Polytropic layer polytropic index
-    rho0=11e6*(const.m_p/2)/u.cm**3 # Density normalization
+    n0=11e6*(const.m_p/2)/u.cm**3 # Density normalization
 ) 
 fig,axes=plot_psw.plot_isothermal_layer(sol)
 ```
