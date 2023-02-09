@@ -26,6 +26,7 @@ import plot_parkersolarwind as plot_psw
 import numpy as np
 import astropy.units as u
 import astropy.constants as const
+import matplotlib.pyplot as plt
 sol = psw.solve_isothermal_layer(
     np.logspace(0,np.log10(200),400)*u.R_sun, # Radial grid points
     11.5*u.R_sun, # Isothermal layer outer radius
@@ -34,6 +35,7 @@ sol = psw.solve_isothermal_layer(
     n0=11e6/u.cm**3 # Density normalization
 ) 
 fig,axes=plot_psw.plot_isothermal_layer(sol)
+plt.show()
 ```
 ![image](IsoLayerExample.png)
 
