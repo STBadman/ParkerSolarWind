@@ -25,6 +25,7 @@ import parkersolarwind as psw
 import plot_parkersolarwind as plot_psw
 import numpy as np
 import astropy.units as u
+import astropy.constants as const
 sol = psw.solve_isothermal_layer(
     np.logspace(0,np.log10(200),400)*u.R_sun, # Radial grid points
     11.5*u.R_sun, # Isothermal layer outer radius
