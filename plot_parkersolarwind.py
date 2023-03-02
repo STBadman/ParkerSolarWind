@@ -134,7 +134,13 @@ def plot_polytropic(poly_sols,add_iso=None,cm="inferno") :
     
     return fig,axes
 
-def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None) :
+def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
+                          iso_bkg_col = "pink",
+                          poly_bkg_col = "cyan",
+                          iso_line_col = "red",
+                          poly_line_col = "blue",
+                          gridlines_opt = "both"
+                          ) :
     
     (R_arr_iso, rho_arr_iso, u_arr_iso, T_arr_iso, 
      R_arr_poly, rho_arr_poly, u_arr_poly, T_arr_poly, gamma, mu) = sol
@@ -148,37 +154,37 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None) :
     n_arr_iso = rho_arr_iso/(const.m_p/2)
     axes[0].plot(R_arr_iso.to("R_sun"),
                  n_arr_iso.to("1/cm^3"),
-                 color="red",linewidth=lw)
+                 color=iso_line_col,linewidth=lw)
     n_arr_poly = rho_arr_poly/(const.m_p/2)
     axes[0].plot(R_arr_poly.to("R_sun"),
                  n_arr_poly.to("1/cm^3"),
-                 color="blue",linewidth=lw)
+                 color=poly_line_col,linewidth=lw)
     
     axes[1].plot(R_arr_iso.to("R_sun"),
                  u_arr_iso.to("km/s"),
-                 color="red",linewidth=lw,zorder=4)
+                 color=iso_line_col,linewidth=lw,zorder=4)
     axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
                     psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
                     s=50,color="black",zorder=5)
     axes[1].plot(R_arr_poly.to("R_sun"),
                  u_arr_poly.to("km/s"),
-                 color="blue",linewidth=lw)
+                 color=poly_line_col,linewidth=lw)
     
     axes[2].plot(R_arr_iso.to("R_sun"),
                  T_arr_iso.to("MK"),
-                 color="red",linewidth=lw)
+                 color=iso_line_col,linewidth=lw)
     axes[2].plot(R_arr_poly.to("R_sun"),
                  T_arr_poly.to("MK"),
-                 color="blue",linewidth=lw)
+                 color=poly_line_col,linewidth=lw)
 
     for ax in axes :
         ax.set_yscale("log")
         ax.set_xscale("log")
         ax.set_xlabel("Radius (Rs)")
-        ax.grid(which="both")
+        ax.grid(which=gridlines_opt)
         ax.axvline(R_iso.to("R_sun").value,linewidth=2,color="black",linestyle="--")
-        ax.axvspan(1,R_iso.to("R_sun").value,color="pink",alpha=0.3)
-        ax.axvspan(R_iso.to("R_sun").value,200,color="cyan",alpha=0.3)
+        ax.axvspan(1,R_iso.to("R_sun").value,color=iso_bkg_col,alpha=0.3)
+        ax.axvspan(R_iso.to("R_sun").value,200,color=poly_bkg_col,alpha=0.3)
         ax.set_xlim(0.9,200)
         ax.axvline(1,color="black",linewidth=2)
 
