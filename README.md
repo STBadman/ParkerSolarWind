@@ -50,6 +50,6 @@ As of (2/6/2023) :
 
 Update (7/3/2023) :
 
-Following [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) Section D we implement the ability to include an external force in the solutions. We do this for each of the isothermal, polytropic and isothermal layer solutions. Plotting options are included to display the force parameters where the figure of merit is the force per unit mass relative to GM$_\odot$/R$^2$.
+Following [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) Section D we implement the ability to include an external force in the solutions. We do this for each of the isothermal, polytropic and isothermal layer solutions. Plotting options are included to display the force parameters where the figure of merit is the force per unit mass relative to $GM_\odot/R^2$.
 
 A new set of example plots is appended to [ExampleNotebook.ipynb](https://github.com/STBadman/ParkerSolarWind/blob/main/ExampleNotebook.ipynb) to illustrate these updates. 
