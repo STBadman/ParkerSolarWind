@@ -5,19 +5,23 @@ import astropy.units as u
 import numpy as np
 
 
-def plot_isothermal(iso_sols,lw=2) :
+def plot_isothermal(iso_sols,fexts=None, lw=2) :
 
-    fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
+    if fexts is None : fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
+    else : 
+        fig,axes=plt.subplots(figsize=(10,8),ncols=2,nrows=2,sharex=True)
+        axes= axes.flatten()
 
-    for sol in iso_sols :
+    for ii,sol in enumerate(iso_sols) :
         r_iso, rho_iso, u_iso, T_iso, mu = sol
         T0 = T_iso[0]
 
         s=axes[1].plot(r_iso,u_iso,linewidth=lw)
         col = s[0].get_color()
+        if fexts is None : rc=psw.critical_radius(T0,mu=mu).value
+        else : rc = psw.critical_radius_fext(fexts[ii],T_coronal=T0).value
         axes[1].scatter(
-            psw.critical_radius(T0,mu=mu).value,
-            psw.critical_speed(T0,mu=mu).value,
+            rc, psw.critical_speed(T0,mu=mu).value,
             color= col, s=100, label="$T_0$="+f"{T0}, "+"$\mu=$"+f"{mu}"
             )
         axes[0].plot(r_iso,(rho_iso/(const.m_p/2)).to("cm^-3"),linewidth=lw)
@@ -32,14 +36,23 @@ def plot_isothermal(iso_sols,lw=2) :
     axes[2].set_ylabel("T (MK)")
     axes[2].set_title("Temperature Profile")
 
-    T_arr = np.logspace(-2,1,40)*u.MK
-    axes[1].plot(
-        psw.critical_radius(T_arr).value,
-        psw.critical_speed(T_arr).value,
-        color="black",label="$V_{crit}(T_0)[0.01MK-10MK]$",
-        linestyle="--"
-        )
-    axes[1].legend()
+    if fexts is None:
+        T_arr = np.logspace(-2,1,40)*u.MK
+        axes[1].plot(
+            psw.critical_radius(T_arr).value,
+            psw.critical_speed(T_arr).value,
+            color="black",label="$V_{crit}(T_0)[0.01MK-10MK]$",
+            linestyle="--"
+            )
+        axes[1].legend()
+
+    else : 
+        norm0 = const.G*const.M_sun/const.R_sun**2
+        for fext in fexts : axes[3].plot(r_iso,fext(r_iso).to(norm0.unit)/norm0)
+        axes[3].plot(r_iso,1/r_iso.value**2,color="black",linestyle="--",label="Gravity")
+        axes[3].legend()
+        axes[3].set_ylabel("F$_{ext}$/(GM$_\odot$/R$_\odot^2$)")
+        axes[3].set_title("External Forcing")
 
     for ax in axes :
         ax.set_xscale("log")
@@ -53,17 +66,20 @@ def plot_isothermal(iso_sols,lw=2) :
 
     return fig,axes
 
-def plot_polytropic(poly_sols,add_iso=None,cm="inferno") :
+def plot_polytropic(poly_sols,add_iso=None,cm="inferno",fexts=None) :
     
     fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
 
     norm = plt.Normalize(0,len(poly_sols))
+    if fexts is None : fexts = [None]*len(poly_sols)
     if add_iso is None : add_iso = [False]*len(poly_sols)
-    for jj,(sol,add_iso_) in enumerate(zip(poly_sols,add_iso)) :
+    for jj,(sol,add_iso_,fe) in enumerate(zip(poly_sols,add_iso,fexts)) :
         R_sol,rho_sol,u_sol,T_sol,rcrit,ucrit,gamma,T0,mu = sol
         r0 = R_sol[0]
         if add_iso_ :
             rho_iso, u_iso, T_iso, mu = psw.solve_parker_isothermal(R_sol,T0,mu=mu)[1:]
+        if fe is not None : fadd = f"F={fe}"
+        else : fadd = ""
 
         ##### DENSITY #######
         # Polytropic
@@ -97,7 +113,8 @@ def plot_polytropic(poly_sols,add_iso=None,cm="inferno") :
         ###### TEMPERATURE ######
         # Polytropic
         axes[2].plot(R_sol,T_sol,color=plt.get_cmap(cm)(norm(jj)),
-                     label=f"Polytropic (T0={T0.to('MK'):.1f}, "+"$\gamma$="+f"{gamma}, "+"$\mu$="+f"{mu})"
+                     label=(f"Polytropic (T0={T0.to('MK'):.1f}, "
+                            +"$\gamma$="+f"{gamma}, "+"$\mu$="+f"{mu}), "+fadd)
                     )
         # Isothermal
         if add_iso_ : s=axes[2].plot(
@@ -139,7 +156,8 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
                           poly_bkg_col = "cyan",
                           iso_line_col = "red",
                           poly_line_col = "blue",
-                          gridlines_opt = "both"
+                          gridlines_opt = "both",
+                          force_details=None
                           ) :
     
     (R_arr_iso, rho_arr_iso, u_arr_iso, T_arr_iso, 
@@ -147,6 +165,9 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
     R_iso = R_arr_iso[-1]
     T_iso = T_arr_iso[-1]
     
+    if force_details is not None :
+        mult,fext,ifext = force_details
+
     if fig is None and axes is None :
         fig,axes=plt.subplots(figsize=figsize,ncols=3,sharex=True)
 
@@ -163,9 +184,19 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
     axes[1].plot(R_arr_iso.to("R_sun"),
                  u_arr_iso.to("km/s"),
                  color=iso_line_col,linewidth=lw,zorder=4)
-    axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
-                    psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
-                    s=50,color="black",zorder=5)
+    if force_details is None :
+        axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
+                        psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                        s=50,color="black",zorder=5)
+    else : 
+        axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
+                        psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                        s=50,color="black",zorder=5,label="F=0")
+        axes[1].scatter(psw.critical_radius_fext(fext,T_arr_iso[0],mu=mu).to("R_sun"),
+                        psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                        s=50,color="gold",zorder=5,label=f"F={mult}")
+        axes[1].legend()
+
     axes[1].plot(R_arr_poly.to("R_sun"),
                  u_arr_poly.to("km/s"),
                  color=poly_line_col,linewidth=lw)
