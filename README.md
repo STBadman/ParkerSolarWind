@@ -41,9 +41,15 @@ plt.show()
 
 Examples for the other two types of solution as a function of varying input parameters can be seen in `ExampleNotebook.ipynb`
 
-As of this commit (2/6/2023) : 
+As of (2/6/2023) : 
 
 * The average corpuscular mass defaults to $\mu=0.5$ but may be tweaked as a parameter to the solve functions
 * (Future enhancement) Radial flux tube expansion is assumed throughout all space 
 * (Known Issue) For `solve_parker_polytropic` No check is currently done that the input parameters lie in the allowed region of $(T_\odot-\gamma)$ space ([Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract)), so it is possible to generate an all-NaN solution for this reason.
-* (Known Issue) For `solve_parker_polytropic`, there are some numerical instability issues which can result in solutions in the wrong branch or all-NaN solutions. This is likely due to the implementation of `scipy.optimize.root` with which we currently integrate from $1R_\odot$ outwards and use the previous solution as the initial guess, except at the critical point where we enforce the guess to jump to above the critical speed. A future implementation should integrate explicitly from the critical point down and up separately with adaptive radial grid spacing and the local solution gradient should be used to imrpove the guess.
+* (Known Issue) For `solve_parker_polytropic`, there are some numerical instability issues which can result in solutions in the wrong branch or all-NaN solutions. This is likely due to the implementation of `scipy.optimize.root` with which we currently integrate from $1R_\odot$ outwards and use the previous solution as the initial guess, except at the critical point where we enforce the guess to jump to above the critical speed. A future implementation should integrate explicitly from the critical point down and up separately with adaptive radial grid spacing and the local solution gradient should be used to improve the guess.
+
+Update (7/3/2023) :
+
+Following [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) Section D we implement the ability to include an external force in the solutions. We do this for each of the isothermal, polytropic and isothermal layer solutions. Plotting options are included to display the force parameters where the figure of merit is the force per unit mass relative to GM$_\odot$/R$^2$.
+
+A new set of example plots is appended to [ExampleNotebook.ipynb](https://github.com/STBadman/ParkerSolarWind/blob/main/ExampleNotebook.ipynb) to illustrate these updates. 
