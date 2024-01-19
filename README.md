@@ -22,7 +22,6 @@ In the following example, we solve and plot an isothermal layer solution :
 
 ```python
 import parkersolarwind as psw
-import plot_parkersolarwind as plot_psw
 import numpy as np
 import astropy.units as u
 import astropy.constants as const
@@ -34,7 +33,7 @@ sol = psw.solve_isothermal_layer(
     1.38, # Polytropic layer polytropic index
     n0=11e6/u.cm**3 # Density normalization
 ) 
-fig,axes=plot_psw.plot_isothermal_layer(sol)
+fig, axes = psw.plot_isothermal_layer(sol)
 plt.show()
 ```
 ![image](IsoLayerExample.png)
