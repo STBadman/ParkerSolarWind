@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import parkersolarwind as psw
+from . import parkersolarwind as psw
 import astropy.constants as const
 import astropy.units as u
 import numpy as np
