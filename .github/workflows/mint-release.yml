@@ -7,9 +7,6 @@ on:
         description: Release tag 🏷️
         required: true
         default: 0.1.0
-      DOI:
-        description: Reserved DOI from Zenodo
-        required: true
 
 
 jobs:
