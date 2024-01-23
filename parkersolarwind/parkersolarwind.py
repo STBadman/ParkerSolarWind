@@ -33,14 +33,19 @@ def critical_radius_fext(f_ext,T_coronal=2e+6*u.K,mu=0.5) :
 def parker_isothermal(uu,r,u_c,r_c) :
     return ((uu/u_c)**2 -1) - np.log((uu/u_c)**2) - 4*np.log(r/r_c) -4*(r_c/r-1)
 
-def parker_isothermal_fext(uu,r,u_c,r_c, ifext) :
+def parker_isothermal_fext(uu,r,u_c,r_c,u_g,ifext) :
     ''' not quite as simplified as no closed form expression for r_c'''
-    u_g = ((const.G*const.M_sun/(r_c*u.R_sun))**0.5).to(u.km/u.s).value 
+    # All args float or function(floats) -> float
+    # All speed terms units = km/s
+    # All distance terms units = R_sin
+    # [ifext(r1,r2)] -> (km/s)^2 
+
+    #u_g = ((const.G*const.M_sun/(r_c*u.R_sun))**0.5).to(u.km/u.s).value 
 
     term1 = 0.5*((uu/u_c)**2-1)
     term2 = -np.log(np.abs(uu*r**2)/(u_c*r_c**2))
     term3 = -u_g**2/u_c**2 * (r_c/r - 1)
-    term4 = -ifext(r_c*u.R_sun,r*u.R_sun).to((u.km/u.s)**2).value/u_c**2
+    term4 = -ifext(r_c,r)/u_c**2#.to((u.km/u.s)**2).value/u_c**2
     #print(r," : ",term1,term2,term3,term4, " : ", uu)
     return term1 + term2 + term3 +term4 #=0
 
@@ -79,6 +84,7 @@ def solve_parker_isothermal_fext(
     u_sol=[]
     R_crit = critical_radius_fext(fext, T_coronal=T0, mu=mu).to("R_sun").value
     u_crit = critical_speed(T0, mu=mu).to("km/s").value
+    u_g = ((const.G*const.M_sun/(R_crit*u.R_sun))**0.5).to(u.km/u.s).value
     rho0 = mu*const.m_p*n0 
     ### Note n0 is the total plasma density. Since we are assuming a quasineutral electron-proton
     ### plasma, the proton density and electron densities are both n0/2. This distinction is 
@@ -91,7 +97,7 @@ def solve_parker_isothermal_fext(
     u0 = [-u_crit*10,-u_crit/100, u_crit/100, u_crit*10]
     for ii,R in enumerate(R_sol.to("R_sun").value) : 
         u0next=sorted(opt.root(parker_isothermal_fext,u0,
-                               args=(R, u_crit, R_crit, ifext)).x)
+                               args=(R, u_crit, R_crit, u_g, ifext)).x)
         u0=u0next
         if R < R_crit : u_sol.append(u0next[-2])
         else : u_sol.append(u0next[-1])
@@ -133,8 +139,9 @@ def s_crit_fext(sc, T0_, gamma_, fext_, ifext_, r0=1*u.R_sun, mu=0.5) :
                 )
     term2 =  1/(gamma_-1)*(1/s_prime - (uc0/ug)**2)
     term3 = -2*(1/sc-1)
-    term4 = -1/(ug.to(u.km/u.s)**2).value * ifext_(r0,sc*r0).to(u.km**2/u.s**2).value
-    return (term1 + term2 + term3 + term4)*-sc
+    term4 = -1/(ug.to(u.km/u.s)**2).value * ifext_(r0.to("R_sun").value,sc)#*(u.km**2/u.s**2).value
+    evaluate = (term1 + term2 + term3 + term4)*-sc
+    return evaluate.reshape(sc.shape)
 
 ### function that solves for s_crit for the accelerating and
 ### assuming 2 roots and returns [nan,nan] if solution doesn't 
@@ -187,10 +194,15 @@ def parker_polytropic(u_,r_, u0_, uc0_, ug_, gamma_, r0_) :
     return term1 + term2 + term3
 
 def parker_polytropic_fext(u_,r_, ifext_, u0_, uc0_, ug_, gamma_, r0_) :
+    ### Warning :
+    # Requires inputs to be floats or return floats s.t.:
+    # [u_] = km/s, [r_] = R_sun, [ifext_] returns km^2/s^2
+    # [u0_] = km/s, [uc0_] = km/s, [ug_] = km/s, [gamma] = None,
+    # [r0_] = R_sun
     term1 = 0.5 * (u_**2 - u0_**2)
     term2 = uc0_**2/(gamma_-1) * (((u0_*r0_**2)/(u_*r_**2))**(gamma_-1) - 1)
     term3 = -2*ug_**2 * (r0_/r_ - 1)
-    term4 = -ifext_(r0_*u.R_sun,r_*u.R_sun).to(u.km**2/u.s**2).value
+    term4 = -ifext_(r0_,r_)#.to(u.km**2/u.s**2).value
     return term1 + term2 + term3 + term4
 
 def solve_parker_polytropic(
@@ -414,7 +426,9 @@ def solve_isothermal_layer_fext(R_arr,
                                 fext,
                                 ifext, 
                                 n0=5e6*u.cm**-3, 
-                                mu=0.5) :
+                                mu=0.5,
+                                force_free_polytrope=False
+                                ) :
     
     rho0 = mu*const.m_p*n0
 
@@ -434,26 +448,46 @@ def solve_isothermal_layer_fext(R_arr,
     gamma=gamma
     r0_poly = R_arr_iso[-1]
 
-    (_,
-     rho_arr_poly,
-     u_arr_poly,
-     T_arr_poly,
-     _,
-     _,
-     _,
-     _,
-     _
-    ) = solve_parker_polytropic_fext(
-        R_arr_poly,
-        T0_poly,
-        gamma,
-        fext,
-        ifext,
-        r0_poly,
-        n0=rho0_poly/(mu*const.m_p),
-        u0=u0_poly,
-        mu=mu
-        )
+    if not force_free_polytrope :
+        (_,
+        rho_arr_poly,
+        u_arr_poly,
+        T_arr_poly,
+        _,
+        _,
+        _,
+        _,
+        _
+        ) = solve_parker_polytropic_fext(
+            R_arr_poly,
+            T0_poly,
+            gamma,
+            fext,
+            ifext,
+            r0_poly,
+            n0=rho0_poly/(mu*const.m_p),
+            u0=u0_poly,
+            mu=mu
+            )
+    else :
+        (_,
+        rho_arr_poly,
+        u_arr_poly,
+        T_arr_poly,
+        _,
+        _,
+        _,
+        _,
+        _
+        ) = solve_parker_polytropic(
+            R_arr_poly,
+            T0_poly,
+            gamma,
+            r0_poly,
+            n0=rho0_poly/(mu*const.m_p),
+            u0=u0_poly,
+            mu=mu
+            )
     
     return (R_arr_iso.to("R_sun"), 
             rho_arr_iso.to("kg/m^3"), 

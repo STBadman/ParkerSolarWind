@@ -157,7 +157,9 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
                           iso_line_col = "red",
                           poly_line_col = "blue",
                           gridlines_opt = "both",
-                          force_details=None
+                          force_details=None,
+                          add_force_to_legend=True,
+                          force_free_crit=False
                           ) :
     
     (R_arr_iso, rho_arr_iso, u_arr_iso, T_arr_iso, 
@@ -171,7 +173,7 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
     if fig is None and axes is None :
         fig,axes=plt.subplots(figsize=figsize,ncols=3,sharex=True)
 
-    #### Number Density (assuming m = m_p/2)
+    #### Proton Number Density (assuming m = m_p/2)
     n_arr_iso = rho_arr_iso/(const.m_p/2)
     axes[0].plot(R_arr_iso.to("R_sun"),
                  n_arr_iso.to("1/cm^3"),
@@ -189,13 +191,25 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
                         psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
                         s=50,color="black",zorder=5)
     else : 
-        axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
-                        psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
-                        s=50,color="black",zorder=5,label="F=0")
-        axes[1].scatter(psw.critical_radius_fext(fext,T_arr_iso[0],mu=mu).to("R_sun"),
-                        psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
-                        s=50,color="gold",zorder=5,label=f"F={mult}")
-        axes[1].legend()
+        if add_force_to_legend : 
+            if force_free_crit: 
+                axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="black",zorder=5,label="F=0")
+                #lab_force = 
+            axes[1].scatter(psw.critical_radius_fext(fext,T_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="gold",zorder=5,label=f"F={mult}")
+            axes[1].legend()
+        else:
+            if force_free_crit: 
+                axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="black",zorder=5)
+            axes[1].scatter(psw.critical_radius_fext(fext,T_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="gold",zorder=5)
+            axes[1].legend()
 
     axes[1].plot(R_arr_poly.to("R_sun"),
                  u_arr_poly.to("km/s"),
