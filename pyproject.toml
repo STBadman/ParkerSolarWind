@@ -11,6 +11,19 @@ dependencies = [
 	"numpy >= 1.21",
 	"scipy >= 1.8",
 ]
+[project.optional-dependencies]
+tests = [
+  "pytest",
+  "pytest-cov"
+]
+docs = [
+  "sphinx",
+  "pydata_sphinx_theme"
+]
+lint = [
+  "black",
+  "flake8"
+]
 requires-python = ">= 3.8"
 authors = [
 	{name="Samuel Badman"},
