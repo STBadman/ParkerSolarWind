@@ -42,6 +42,9 @@ def parker_isothermal_fext(uu,r,u_c,r_c,u_g,ifext) :
 
     #u_g = ((const.G*const.M_sun/(r_c*u.R_sun))**0.5).to(u.km/u.s).value 
 
+    assert callable(ifext), "ifext must be a two-to-one " \
+        "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
+
     term1 = 0.5*((uu/u_c)**2-1)
     term2 = -np.log(np.abs(uu*r**2)/(u_c*r_c**2))
     term3 = -u_g**2/u_c**2 * (r_c/r - 1)
@@ -81,6 +84,10 @@ def solve_parker_isothermal(
 def solve_parker_isothermal_fext(
     R_sol, T0, fext, ifext, n0=1e7*u.cm**-3, r0=1.0*u.R_sun,mu=0.5
     ) :
+    assert callable(fext), "f_ext must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
+    assert callable(ifext), "ifext must be a two-to-one " \
+        "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
     u_sol=[]
     R_crit = critical_radius_fext(fext, T_coronal=T0, mu=mu).to("R_sun").value
     u_crit = critical_speed(T0, mu=mu).to("km/s").value
@@ -129,6 +136,10 @@ def s_crit(sc,T0_,gamma_,r0=1*u.R_sun, mu=0.5) :
 
 ### define f(s_c,T_0, gamma, f_ext(s_c) | r0 ) = 0
 def s_crit_fext(sc, T0_, gamma_, fext_, ifext_, r0=1*u.R_sun, mu=0.5) :
+    assert callable(fext_), "fext_ must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
+    assert callable(ifext_), "ifext_ must be a two-to-one " \
+    "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
     ug = get_ug(r0)
     uc0 = get_uc0(gamma_,T0_,mu=mu)
     # Shi+ Eqn 29
@@ -152,6 +163,11 @@ def solve_sc(T_0__,gamma__,r0__=1.0*u.R_sun,mu__=0.5) :
     else : return [np.nan,np.nan]
 
 def solve_sc_fext(T_0__,gamma__,fext__,ifext__,r0__=1.0*u.R_sun,mu__=0.5) :
+    assert callable(fext__), "fext__ must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
+    assert callable(ifext__), "ifext__ must be a two-to-one " \
+    "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
+    
     ### Shi+2022 Eqn 31
     guess = solve_sc(T_0__,gamma__,r0__=r0__,mu__=mu__)
     sol = opt.root(s_crit_fext,guess,args=(T_0__,
@@ -170,6 +186,8 @@ def get_u0(s_c,gamma,T_0,r0=1*u.R_sun,mu=0.5) :
     return ug * (ug/uc0)**(2/(gamma-1))*np.sqrt(s_c**b)
 
 def get_u0_fext(sc,gamma,T0,fext,r0=1*u.R_sun,mu=0.5) :
+    assert callable(fext), "fext must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
     # Shi+2022 Equation 30
     ug = get_ug(r0).to("km/s").value
     uc0 = get_uc0(gamma,T0, mu=mu).to("km/s").value
@@ -182,6 +200,8 @@ def get_uc_crit(s_c, r0=1*u.R_sun) :
     return get_ug(r0)/np.sqrt(s_c)
 
 def get_uc_crit_fext(sc, fext, r0=1*u.R_sun) : 
+    assert callable(fext), "fext must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
     ug = get_ug(r0).to("km/s").value
     s_prime = (1/sc - ((sc*r0) *fext((sc*r0).to("R_sun"))
                       ).to(u.km**2/u.s**2).value/(2*ug**2))**-1
@@ -199,6 +219,8 @@ def parker_polytropic_fext(u_,r_, ifext_, u0_, uc0_, ug_, gamma_, r0_) :
     # [u_] = km/s, [r_] = R_sun, [ifext_] returns km^2/s^2
     # [u0_] = km/s, [uc0_] = km/s, [ug_] = km/s, [gamma] = None,
     # [r0_] = R_sun
+    assert callable(ifext_), "ifext_ must be a two-to-one " \
+    "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
     term1 = 0.5 * (u_**2 - u0_**2)
     term2 = uc0_**2/(gamma_-1) * (((u0_*r0_**2)/(u_*r_**2))**(gamma_-1) - 1)
     term3 = -2*ug_**2 * (r0_/r_ - 1)
@@ -292,6 +314,10 @@ def solve_parker_polytropic_fext(
     u0=None,
     mu=0.5
     ) :
+    assert callable(fext), "fext must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
+    assert callable(ifext), "ifext must be a two-to-one " \
+    "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
 
     ### First solve for the critical point
     r_crit = np.nanmax(solve_sc_fext(T0,gamma,
@@ -429,7 +455,12 @@ def solve_isothermal_layer_fext(R_arr,
                                 mu=0.5,
                                 force_free_polytrope=False
                                 ) :
-    
+
+    assert callable(fext), "fext must be a one-to-one " \
+        "function mapping r(units=distance) to F(units=force/kg)"
+    assert callable(ifext), "ifext must be a two-to-one " \
+    "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
+
     rho0 = mu*const.m_p*n0
 
     R_iso_ind = np.where(R_arr.to("R_sun").value >= R_iso.to("R_sun").value)[0][0]
