@@ -259,22 +259,24 @@ def solve_parker_polytropic(
     # Solve Bernouilli's equation
     u_sol_polytropic = []
     uguess = [u0.to("km/s").value,uc_crit.to("km/s").value*1.1]
-    for ii,R in enumerate(R_sol) : 
+    # Do the unit conversions outside the loop
+    args = (u0.to("km/s").value,
+            uc0.to("km/s").value,
+            ug.to("km/s").value,
+            gamma,
+            r0.to("R_sun").value
+           )
+    r_crit_val = r_crit.to("R_sun").value
+    for R in R_sol.to("R_sun").value :
         sol = opt.root(parker_polytropic,
                        uguess,
-                       args=(R.to("R_sun").value,
-                             u0.to("km/s").value,
-                             uc0.to("km/s").value,
-                             ug.to("km/s").value,
-                             gamma,
-                             r0.to("R_sun").value
-                             )
+                       args=(R,) + args
                       )
         if sol.message == 'The solution converged.' :
-            uguessnext=sorted(list(sol.x))
+            uguessnext=sorted(sol.x)
             uguess=uguessnext
         else : uguessnext = [np.nan]*2
-        if R < r_crit : u_sol_polytropic.append(uguessnext[-2])
+        if R < r_crit_val : u_sol_polytropic.append(uguessnext[-2])
         else : u_sol_polytropic.append(uguessnext[-1])
     u_sol_polytropic = np.array(u_sol_polytropic) * u.km/u.s
     u_sol_polytropic[0] = u0
