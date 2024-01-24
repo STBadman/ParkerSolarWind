@@ -6,6 +6,7 @@ import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import numba
 
 ##### ISOTHERMAL PARKER SOLAR WIND
 
@@ -30,6 +31,7 @@ def critical_radius_fext(f_ext,T_coronal=2e+6*u.K,mu=0.5) :
         )
     return opt.root(transcendental,0.5*critical_radius(T_coronal,mu=mu)).x[0]*u.R_sun
 
+@numba.njit(cache=True)
 def parker_isothermal(uu,r,u_c,r_c) :
     return ((uu/u_c)**2 -1) - np.log((uu/u_c)**2) - 4*np.log(r/r_c) -4*(r_c/r-1)
 
@@ -207,6 +209,7 @@ def get_uc_crit_fext(sc, fext, r0=1*u.R_sun) :
                       ).to(u.km**2/u.s**2).value/(2*ug**2))**-1
     return get_ug(r0)/np.sqrt(s_prime)
 
+@numba.njit(cache=True)
 def parker_polytropic(u_,r_, u0_, uc0_, ug_, gamma_, r0_) :
     term1 = 0.5 * (u_**2 - u0_**2)
     term2 = uc0_**2/(gamma_-1) * (((u0_*r0_**2)/(u_*r_**2))**(gamma_-1) - 1)
