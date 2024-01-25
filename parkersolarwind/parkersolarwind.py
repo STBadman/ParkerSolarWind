@@ -6,6 +6,7 @@ import numpy as np
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import numba
 
 ##### ISOTHERMAL PARKER SOLAR WIND
 
@@ -30,6 +31,7 @@ def critical_radius_fext(f_ext,T_coronal=2e+6*u.K,mu=0.5) :
         )
     return opt.root(transcendental,0.5*critical_radius(T_coronal,mu=mu)).x[0]*u.R_sun
 
+@numba.njit(cache=True)
 def parker_isothermal(uu,r,u_c,r_c) :
     return ((uu/u_c)**2 -1) - np.log((uu/u_c)**2) - 4*np.log(r/r_c) -4*(r_c/r-1)
 
@@ -207,6 +209,7 @@ def get_uc_crit_fext(sc, fext, r0=1*u.R_sun) :
                       ).to(u.km**2/u.s**2).value/(2*ug**2))**-1
     return get_ug(r0)/np.sqrt(s_prime)
 
+@numba.njit(cache=True)
 def parker_polytropic(u_,r_, u0_, uc0_, ug_, gamma_, r0_) :
     term1 = 0.5 * (u_**2 - u0_**2)
     term2 = uc0_**2/(gamma_-1) * (((u0_*r0_**2)/(u_*r_**2))**(gamma_-1) - 1)
@@ -259,22 +262,24 @@ def solve_parker_polytropic(
     # Solve Bernouilli's equation
     u_sol_polytropic = []
     uguess = [u0.to("km/s").value,uc_crit.to("km/s").value*1.1]
-    for ii,R in enumerate(R_sol) : 
+    # Do the unit conversions outside the loop
+    args = (u0.to("km/s").value,
+            uc0.to("km/s").value,
+            ug.to("km/s").value,
+            gamma,
+            r0.to("R_sun").value
+           )
+    r_crit_val = r_crit.to("R_sun").value
+    for R in R_sol.to("R_sun").value :
         sol = opt.root(parker_polytropic,
                        uguess,
-                       args=(R.to("R_sun").value,
-                             u0.to("km/s").value,
-                             uc0.to("km/s").value,
-                             ug.to("km/s").value,
-                             gamma,
-                             r0.to("R_sun").value
-                             )
+                       args=(R,) + args
                       )
         if sol.message == 'The solution converged.' :
-            uguessnext=sorted(list(sol.x))
+            uguessnext=sorted(sol.x)
             uguess=uguessnext
         else : uguessnext = [np.nan]*2
-        if R < r_crit : u_sol_polytropic.append(uguessnext[-2])
+        if R < r_crit_val : u_sol_polytropic.append(uguessnext[-2])
         else : u_sol_polytropic.append(uguessnext[-1])
     u_sol_polytropic = np.array(u_sol_polytropic) * u.km/u.s
     u_sol_polytropic[0] = u0

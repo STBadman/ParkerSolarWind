@@ -13,6 +13,7 @@ dependencies = [
 	"matplotlib >= 3.6",
 	"numpy >= 1.21",
 	"scipy >= 1.8",
+  "numba >= 0.58",
 ]
 requires-python = " >= 3.8"
 description ="Python code to produce Parker solar wind solutions (isothermal, polytropic and isotherm-polytrope 2-layer)"
