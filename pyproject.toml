@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "parkersolarwind"
 version = "0.1.0"
 authors = [
-  {name = "Sam Badman", email = "me@example.com"}
+  {name = "Sam Badman", email = "samuel.badman@cfa.harvard.edu"}
 ]
 dependencies = [
 	"astropy >= 5.0",
