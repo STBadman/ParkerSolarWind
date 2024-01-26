@@ -33,13 +33,14 @@ def critical_radius_fext(f_ext,T_coronal=2e+6*u.K,mu=0.5) :
 
 @numba.njit(cache=True)
 def parker_isothermal(uu,r,u_c,r_c) :
+    # To-Do assert all inputs are floats (no astropy)
     return ((uu/u_c)**2 -1) - np.log((uu/u_c)**2) - 4*np.log(r/r_c) -4*(r_c/r-1)
 
 def parker_isothermal_fext(uu,r,u_c,r_c,u_g,ifext) :
     ''' not quite as simplified as no closed form expression for r_c'''
     # All args float or function(floats) -> float
     # All speed terms units = km/s
-    # All distance terms units = R_sin
+    # All distance terms units = R_sun
     # [ifext(r1,r2)] -> (km/s)^2 
 
     #u_g = ((const.G*const.M_sun/(r_c*u.R_sun))**0.5).to(u.km/u.s).value 
@@ -50,7 +51,7 @@ def parker_isothermal_fext(uu,r,u_c,r_c,u_g,ifext) :
     term1 = 0.5*((uu/u_c)**2-1)
     term2 = -np.log(np.abs(uu*r**2)/(u_c*r_c**2))
     term3 = -u_g**2/u_c**2 * (r_c/r - 1)
-    term4 = -ifext(r_c,r)/u_c**2#.to((u.km/u.s)**2).value/u_c**2
+    term4 = -ifext(np.array([r_c]),np.array([r]))/u_c**2#.to((u.km/u.s)**2).value/u_c**2
     #print(r," : ",term1,term2,term3,term4, " : ", uu)
     return term1 + term2 + term3 +term4 #=0
 
@@ -188,6 +189,7 @@ def get_u0(s_c,gamma,T_0,r0=1*u.R_sun,mu=0.5) :
     return ug * (ug/uc0)**(2/(gamma-1))*np.sqrt(s_c**b)
 
 def get_u0_fext(sc,gamma,T0,fext,r0=1*u.R_sun,mu=0.5) :
+    assert type(sc)==np.ndarray, 'input "sc" must be type `numpy.ndarray`'
     assert callable(fext), "fext must be a one-to-one " \
         "function mapping r(units=distance) to F(units=force/kg)"
     # Shi+2022 Equation 30
@@ -202,6 +204,7 @@ def get_uc_crit(s_c, r0=1*u.R_sun) :
     return get_ug(r0)/np.sqrt(s_c)
 
 def get_uc_crit_fext(sc, fext, r0=1*u.R_sun) : 
+    assert type(sc)==np.ndarray, 'input "sc" must be type `numpy.ndarray`'
     assert callable(fext), "fext must be a one-to-one " \
         "function mapping r(units=distance) to F(units=force/kg)"
     ug = get_ug(r0).to("km/s").value
@@ -331,13 +334,13 @@ def solve_parker_polytropic_fext(
                                      mu__=mu)
                                      )*u.R_sun 
     # Compute sound speed at critical point
-    uc_crit = get_uc_crit_fext(r_crit/r0,fext)
+    uc_crit = get_uc_crit_fext(np.array([r_crit/r0]),fext)[0]
 
     ### ALLOW ARBITRARY u0 FOR ISOTHERMAL LAYER
     ## If not supplied, then solve for critical point
-    if u0 is None :  u0 = get_u0_fext(r_crit/r0, 
+    if u0 is None :  u0 = get_u0_fext(np.array([r_crit/r0]), 
                                       gamma, T0, 
-                                      fext, mu=mu)
+                                      fext, mu=mu)[0]
 
     # 1/2 V_esc
     ug = get_ug(r0=r0)
