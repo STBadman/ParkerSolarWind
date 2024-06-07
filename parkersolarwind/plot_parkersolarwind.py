@@ -4,7 +4,7 @@ import astropy.constants as const
 import astropy.units as u
 import numpy as np
 
-
+#
 def plot_isothermal(iso_sols,fexts=None, lw=2) :
 
     if fexts is None : fig,axes=plt.subplots(figsize=(12,4),ncols=3,sharex=True)
