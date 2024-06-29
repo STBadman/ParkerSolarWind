@@ -95,7 +95,7 @@ def solve_parker_isothermal_fext(
     R_crit = critical_radius_fext(fext, T_coronal=T0, mu=mu).to("R_sun").value
     u_crit = critical_speed(T0, mu=mu).to("km/s").value
     u_g = ((const.G*const.M_sun/(R_crit*u.R_sun))**0.5).to(u.km/u.s).value
-    rho0 = mu*const.m_p*n0 
+    rho0 = const.m_p*n0 
     ### Note n0 is the total plasma density. Since we are assuming a quasineutral electron-proton
     ### plasma, the proton density and electron densities are both n0/2. This distinction is 
     ### important for energetics.
@@ -288,7 +288,7 @@ def solve_parker_polytropic(
     u_sol_polytropic[0] = u0
             
     # Produce density and temperature
-    rho0 = mu*const.m_p*n0
+    rho0 = const.m_p*n0
     rho_sol_polytropic = rho0*(
         u0*r0**2 /(u_sol_polytropic*R_sol**2)
     )
@@ -375,7 +375,7 @@ def solve_parker_polytropic_fext(
     u_sol_polytropic[0] = u0
             
     # Produce density and temperature
-    rho0 = mu*const.m_p*n0
+    rho0 = const.m_p*n0
     rho_sol_polytropic = rho0*(
         u0*r0**2 /(u_sol_polytropic*R_sol**2)
     )
@@ -469,7 +469,7 @@ def solve_isothermal_layer_fext(R_arr,
     assert callable(ifext), "ifext must be a two-to-one " \
     "function mapping r1,r2(units=distance) to F.d(units=J/kg)"
 
-    rho0 = mu*const.m_p*n0
+    rho0 = const.m_p*n0
 
     R_iso_ind = np.where(R_arr.to("R_sun").value >= R_iso.to("R_sun").value)[0][0]
     R_arr_iso = R_arr[:R_iso_ind+1]
@@ -504,7 +504,7 @@ def solve_isothermal_layer_fext(R_arr,
             fext,
             ifext,
             r0_poly,
-            n0=rho0_poly/(mu*const.m_p),
+            n0=rho0_poly/(const.m_p),
             u0=u0_poly,
             mu=mu
             )
@@ -523,7 +523,7 @@ def solve_isothermal_layer_fext(R_arr,
             T0_poly,
             gamma,
             r0_poly,
-            n0=rho0_poly/(mu*const.m_p),
+            n0=rho0_poly/(const.m_p),
             u0=u0_poly,
             mu=mu
             )

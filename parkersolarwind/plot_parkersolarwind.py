@@ -159,7 +159,8 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
                           gridlines_opt = "both",
                           force_details=None,
                           add_force_to_legend=True,
-                          force_free_crit=False
+                          force_free_crit=False,
+                          bkg_alpha=0.3
                           ) :
     
     (R_arr_iso, rho_arr_iso, u_arr_iso, T_arr_iso, 
@@ -175,6 +176,7 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
 
     #### Proton Number Density (assuming m = m_p/2)
     n_arr_iso = rho_arr_iso/(const.m_p/2)
+
     axes[0].plot(R_arr_iso.to("R_sun"),
                  n_arr_iso.to("1/cm^3"),
                  color=iso_line_col,linewidth=lw)
@@ -228,8 +230,8 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
         ax.set_xlabel("Radius (Rs)")
         ax.grid(which=gridlines_opt)
         ax.axvline(R_iso.to("R_sun").value,linewidth=2,color="black",linestyle="--")
-        ax.axvspan(1,R_iso.to("R_sun").value,color=iso_bkg_col,alpha=0.3)
-        ax.axvspan(R_iso.to("R_sun").value,200,color=poly_bkg_col,alpha=0.3)
+        ax.axvspan(1,R_iso.to("R_sun").value,color=iso_bkg_col,alpha=bkg_alpha)
+        ax.axvspan(R_iso.to("R_sun").value,200,color=poly_bkg_col,alpha=bkg_alpha)
         ax.set_xlim(0.9,200)
         ax.axvline(1,color="black",linewidth=2)
 
