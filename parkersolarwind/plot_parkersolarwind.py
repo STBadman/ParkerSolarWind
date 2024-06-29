@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from . import parkersolarwind as psw
+from . import parkersolarwind_2fluid as psw2f
 import astropy.constants as const
 import astropy.units as u
 import numpy as np
@@ -260,6 +261,133 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
         +f"{R_iso:.1f}"+", $T_0=$"+f"{T_iso}"
         +", $\gamma=$"+f"{gamma:.2f}"
         )
+
+    plt.tight_layout()
+
+    return fig, axes
+
+def plot_isothermal_layer_2fluid(
+        sol2f,lw=2,figsize=(12,4),fig=None,axes=None,
+        iso_bkg_col = "pink",
+        poly_bkg_col = "cyan",
+        iso_line_col_p = "red",
+        poly_line_col_p = "red",
+        iso_line_col_e = "blue",
+        poly_line_col_e = "blue",
+        gridlines_opt = "both",
+        force_details=None,
+        add_force_to_legend=True,
+        force_free_crit=False,
+        bkg_alpha=0.3
+        ) :
+    
+    (R_arr_iso, rho_arr_iso, u_arr_iso, Te_arr_iso, Tp_arr_iso,
+     R_arr_poly, rho_arr_poly, u_arr_poly, Te_arr_poly, Tp_arr_poly, gammae,gammap, _) = sol2f
+    R_iso = R_arr_iso[-1]
+    Tp_iso = Tp_arr_iso[-1]
+    Te_iso =  Te_arr_iso[-1]
+    mu = 1/(1+Te_iso/Tp_iso)
+    
+    if force_details is not None :
+        mult,fext,ifext = force_details
+
+    if fig is None and axes is None :
+        fig,axes=plt.subplots(figsize=figsize,ncols=3,sharex=True)
+
+    #### Proton Number Density (assuming m = m_p/2)
+    n_arr_iso = rho_arr_iso/(const.m_p/2)
+
+    axes[0].plot(R_arr_iso.to("R_sun"),
+                 n_arr_iso.to("1/cm^3"),
+                 color=iso_line_col_p,linewidth=lw)
+    n_arr_poly = rho_arr_poly/(const.m_p/2)
+    axes[0].plot(R_arr_poly.to("R_sun"),
+                 n_arr_poly.to("1/cm^3"),
+                 color=poly_line_col_p,linewidth=lw)
+    
+    axes[1].plot(R_arr_iso.to("R_sun"),
+                 u_arr_iso.to("km/s"),
+                 color=iso_line_col_p,linewidth=lw,zorder=4)
+    if force_details is None :
+        axes[1].scatter(psw.critical_radius(Tp_arr_iso[0],mu=mu).to("R_sun"),
+                        psw.critical_speed(Tp_arr_iso[0],mu=mu).to("km/s"),
+                        s=50,color="black",zorder=5)
+    else : 
+        if add_force_to_legend : 
+            if force_free_crit: 
+                axes[1].scatter(psw.critical_radius(Tp_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(Tp_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="black",zorder=5,label="F=0")
+                #lab_force = 
+            axes[1].scatter(psw.critical_radius_fext(fext,Tp_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(Tp_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="gold",zorder=5,label=f"F={mult}")
+            axes[1].legend()
+        else:
+            if force_free_crit: 
+                axes[1].scatter(psw.critical_radius(Tp_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(Tp_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="black",zorder=5)
+            axes[1].scatter(psw.critical_radius_fext(fext,Tp_arr_iso[0],mu=mu).to("R_sun"),
+                            psw.critical_speed(Tp_arr_iso[0],mu=mu).to("km/s"),
+                            s=50,color="gold",zorder=5)
+            axes[1].legend()
+
+    axes[1].plot(R_arr_poly.to("R_sun"),
+                 u_arr_poly.to("km/s"),
+                 color=poly_line_col_p,linewidth=lw)
+    
+    axes[2].plot(R_arr_iso.to("R_sun"),
+                 Tp_arr_iso.to("MK"),
+                 color=iso_line_col_p,linewidth=lw)
+    axes[2].plot(R_arr_poly.to("R_sun"),
+                 Tp_arr_poly.to("MK"),
+                 color=poly_line_col_p,linewidth=lw,label="protons")
+    axes[2].plot(R_arr_iso.to("R_sun"),
+                 Te_arr_iso.to("MK"),
+                 color=iso_line_col_e,linewidth=lw,label="electrons")
+    axes[2].plot(R_arr_poly.to("R_sun"),
+                 Te_arr_poly.to("MK"),
+                 color=poly_line_col_e,linewidth=lw)
+
+    for ax in axes :
+        ax.set_yscale("log")
+        ax.set_xscale("log")
+        ax.set_xlabel("Radius (Rs)")
+        ax.grid(which=gridlines_opt)
+        ax.axvline(R_iso.to("R_sun").value,linewidth=2,color="black",linestyle="--")
+        ax.axvspan(1,R_iso.to("R_sun").value,color=iso_bkg_col,alpha=bkg_alpha)
+        ax.axvspan(R_iso.to("R_sun").value,200,color=poly_bkg_col,alpha=bkg_alpha)
+        ax.set_xlim(0.9,200)
+        ax.axvline(1,color="black",linewidth=2)
+
+    axes[0].set_ylabel("Number density (cm^-3)")
+    axes[1].set_ylabel("Velocity (km/s)")
+    axes[2].set_ylabel("Temperature (K)")
+
+
+    axes[0].set_ylabel("$n(r)$ (cm$^{-3}$)")
+    axes[0].set_title(
+        "Density Profile : $n_0$="
+        +f"{(rho_arr_iso[0]/(const.m_p/2)).to('cm^-3'):.2E}"
+    )
+    axes[0].set_ylim(1,2e6)
+
+    axes[1].set_ylabel("u(r) (km/s)")
+    axes[1].set_title("Velocity Profile")
+    axes[1].set_ylim(10,2000)
+
+    axes[2].set_ylabel("T(r) (MK)")
+    axes[2].set_title("Temperature Profile")
+    axes[2].set_ylim(0.05,10)
+
+    fig.suptitle(
+        "Both Layers $R_{iso}$="
+        +f"{R_iso:.1f}"+", $T_0=$"+f"{Tp_iso}"
+        +", $\gamma=$"+f"{gammap:.2f}"
+        )
+
+    axes[2].legend()
 
     plt.tight_layout()
 
