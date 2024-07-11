@@ -270,7 +270,7 @@ def solve_isothermal_layer_2fluid(R_arr,
         gammae,
         gammap,
         r0_poly,
-        n0=rho0_poly/(mu*const.m_p),
+        n0=rho0_poly/(const.m_p),
         u0=u0_poly,
         mu=1
         )

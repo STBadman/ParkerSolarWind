@@ -61,7 +61,7 @@ def solve_parker_isothermal(
     u_sol=[]
     R_crit = critical_radius(T0,mu=mu).to("R_sun").value
     u_crit = critical_speed(T0,mu=mu).to("km/s").value
-    rho0 = mu*const.m_p*n0 
+    rho0 = const.m_p*n0 
     ### Note n0 is the total plasma density. Since we are assuming a quasineutral electron-proton
     ### plasma, the proton density and electron densities are both n0/2. This distinction is 
     ### important for energetics.
@@ -290,7 +290,7 @@ def solve_parker_polytropic(
     # Produce density and temperature
     rho0 = const.m_p*n0
     rho_sol_polytropic = rho0*(
-        u0*r0**2 /(u_sol_polytropic*R_sol**2)
+        u0*R_sol[0]**2 /(u_sol_polytropic*R_sol**2)
     )
     rho_sol_polytropic[0] = rho0 # In case u
     
@@ -437,7 +437,7 @@ def solve_isothermal_layer(R_arr,
         T0_poly,
         gamma,
         r0_poly,
-        n0=rho0_poly/(mu*const.m_p),
+        n0=rho0_poly/(const.m_p),
         u0=u0_poly,
         mu=mu
         )
