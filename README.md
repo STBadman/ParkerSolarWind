@@ -2,7 +2,7 @@
 
 This repository contains code which solves the hydrodynamic equations for an expanding trans-sonic flow under a spherically symmetric gravitational force,  which is Eugene Parker's theory of the solar wind ([Parker 1958](https://ui.adsabs.harvard.edu/abs/1958ApJ...128..664P/abstract), [Parker 1960](https://ui.adsabs.harvard.edu/abs/1960ApJ...132..821P/abstract)).
 
-This code follows closely the recent derivation by [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) and the isothermal layer approach comes from [Dakeyo et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract).
+This code follows closely the recent derivation by [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) and the iso-poly approach (isothermal layer) comes from [Dakeyo et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract).
 
 There are two main files here `parkersolarwind.py` and `plot_parkersolarwind.py`. The former contains the functions to solve the equations themselves, while  the latter contain functions to plot the different types of solutions. The solver engine is `scipy.optimize.root`. 
 
