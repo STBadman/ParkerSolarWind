@@ -4,7 +4,7 @@ This repository contains code which solves the hydrodynamic equations for an exp
 
 This code follows closely the recent derivation by [Shi et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022PhPl...29l2901S/abstract) and the iso-poly approach (isothermal layer) comes from [Dakeyo et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract).
 
-A complementary repository extending this capability to include coronal flux tube expansion from  [Dakeyo et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract), [Dakeyo et al. (2024a)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract), [Dakeyo et al. (2024b)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract) may be found at https://github.com/jbdakeyo/ParkerSolarWind .
+A complementary repository extending this capability to include coronal flux tube expansion from  [Dakeyo et al. (2022)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract), [Dakeyo et al. (2024a)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract), [Dakeyo et al. (2024b)](https://ui.adsabs.harvard.edu/abs/2022ApJ...940..130D/abstract) may be found at https://github.com/jbdakeyo/IsopolySolarWind .
 
 There are two main files here `parkersolarwind.py` and `plot_parkersolarwind.py`. The former contains the functions to solve the equations themselves, while  the latter contain functions to plot the different types of solutions. The solver engine is `scipy.optimize.root`. 
 
