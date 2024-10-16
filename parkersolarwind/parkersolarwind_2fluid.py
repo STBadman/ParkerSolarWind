@@ -63,7 +63,10 @@ def solve_parker_polytropic_2fluid(
 
     # Solve Bernouilli's equation
     u_sol_polytropic = []
-    uguess = [u0.to("km/s").value,uc_crit.to("km/s").value*1.1]
+    if np.isnan(uc_crit.value) :
+        uguess = [u0.to("km/s").value,2*u0.to("km/s").value]
+    else : uguess = [u0.to("km/s").value,uc_crit.to("km/s").value*1.1]
+
     # Do the unit conversions outside the loop
     args = (u0.to("km/s").value,
             uc0e.to("km/s").value,
@@ -160,7 +163,9 @@ def solve_parker_polytropic_fext_2fluid(
     
     # Solve Bernouilli's equation
     u_sol_polytropic = []
-    uguess = [u0.to("km/s").value,uc_crit.to("km/s").value*1.1]
+    if np.isnan(uc_crit.value) :
+        uguess = [u0.to("km/s").value,2*u0.to("km/s").value]
+    else : uguess = [u0.to("km/s").value,uc_crit.to("km/s").value*1.1]
     for ii,R in enumerate(R_sol) : 
         sol = opt.root(parker_polytropic_fext_2fluid,
                        uguess,
