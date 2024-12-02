@@ -130,7 +130,7 @@ def plot_polytropic(poly_sols,add_iso=None,cm="inferno",fexts=None) :
         +f"{(rho_sol[0]/(const.m_p/2)).to('cm^-3'):.2E}"
     )
 
-    axes[0].set_ylim(1,2e6)
+    #axes[0].set_ylim(1,2e6)
     
     axes[1].set_ylabel("u(r) (km/s)")
     axes[1].set_title("Velocity Profile")
@@ -138,7 +138,7 @@ def plot_polytropic(poly_sols,add_iso=None,cm="inferno",fexts=None) :
 
     axes[2].set_ylabel("T(r) (MK)")
     axes[2].set_title("Temperature Profile")
-    axes[2].set_ylim(0.05,10)
+    #axes[2].set_ylim(0.05,10)
 
     axes[2].legend(ncol=1,fontsize=8)
     for ax in axes :
