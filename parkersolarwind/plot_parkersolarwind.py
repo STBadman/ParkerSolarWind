@@ -157,11 +157,13 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
                           poly_bkg_col = "cyan",
                           iso_line_col = "red",
                           poly_line_col = "blue",
+                          iso_boundary_col = "black",
                           gridlines_opt = "both",
                           force_details=None,
                           add_force_to_legend=True,
                           force_free_crit=False,
-                          bkg_alpha=0.3
+                          bkg_alpha=0.3,
+                          annotate_critical_point=True
                           ) :
     
     (R_arr_iso, rho_arr_iso, u_arr_iso, T_arr_iso, 
@@ -189,11 +191,11 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
     axes[1].plot(R_arr_iso.to("R_sun"),
                  u_arr_iso.to("km/s"),
                  color=iso_line_col,linewidth=lw,zorder=4)
-    if force_details is None :
+    if (force_details is None) and annotate_critical_point :
         axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
                         psw.critical_speed(T_arr_iso[0],mu=mu).to("km/s"),
                         s=50,color="black",zorder=5)
-    else : 
+    elif annotate_critical_point : 
         if add_force_to_legend : 
             if force_free_crit: 
                 axes[1].scatter(psw.critical_radius(T_arr_iso[0],mu=mu).to("R_sun"),
@@ -230,7 +232,7 @@ def plot_isothermal_layer(sol,lw=2,figsize=(12,4),fig=None,axes=None,
         ax.set_xscale("log")
         ax.set_xlabel("Radius (Rs)")
         ax.grid(which=gridlines_opt)
-        ax.axvline(R_iso.to("R_sun").value,linewidth=2,color="black",linestyle="--")
+        ax.axvline(R_iso.to("R_sun").value,linewidth=2,color=iso_boundary_col,linestyle="--")
         ax.axvspan(1,R_iso.to("R_sun").value,color=iso_bkg_col,alpha=bkg_alpha)
         ax.axvspan(R_iso.to("R_sun").value,200,color=poly_bkg_col,alpha=bkg_alpha)
         ax.set_xlim(0.9,200)
